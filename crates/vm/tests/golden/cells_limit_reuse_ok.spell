@@ -1,0 +1,9 @@
+spell S(t):
+    let n <- 0
+    while n < 40:
+        let c <- alloc(n)
+        free(c)
+        n <- n + 1
+    end
+    emit Flame(at: t, power: n)
+end

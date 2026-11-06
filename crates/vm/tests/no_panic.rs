@@ -37,9 +37,7 @@ fn instr(r: &mut Lcg) -> Instr {
         13 => Instr::CmpNe,
         14 => Instr::Jmp(small(r) as u32),
         15 => Instr::JmpIfFalse(small(r) as u32),
-        // ponytail: ids 0-3 (memory builtins) are todo!() until v0.1 step 5;
-        // widen to every id once they exist.
-        16 => Instr::CallBuiltin(4 + small(r) as u8),
+        16 => Instr::CallBuiltin(small(r) as u8 % 7),
         17 => Instr::Emit(small(r) as u8 % 3),
         18 => Instr::Ret,
         _ => Instr::Halt,

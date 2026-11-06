@@ -1,0 +1,16 @@
+0000 PUSH_INT 1 fuel=9999
+0001 CALL_BUILTIN 0 (alloc) fuel=9991 cell=0 alloc=0001
+0002 STORE_LOCAL 1 fuel=9990
+0003 LOAD_LOCAL 1 fuel=9989
+0004 PUSH_INT 9 fuel=9988
+0005 CALL_BUILTIN 3 (write) fuel=9986 cell=0 alloc=0001
+0006 LOAD_LOCAL 0 fuel=9985
+0007 LOAD_LOCAL 1 fuel=9984
+0008 CALL_BUILTIN 2 (read) fuel=9982 cell=0 alloc=0001
+0009 EMIT 0 (Flame) fuel=9966
+0010 LOAD_LOCAL 1 fuel=9965
+0011 CALL_BUILTIN 1 (free) fuel=9961 cell=0 alloc=0001 free=0011
+0012 RET fuel=9960
+effect Flame at=1 power=9
+fuel_used=40 executed=13
+ok

@@ -1,0 +1,7 @@
+spell S(t):
+    let n <- 0
+    while n < 40:
+        let c <- alloc(n)
+        n <- n + 1
+    end
+end

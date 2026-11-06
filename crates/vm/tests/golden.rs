@@ -92,7 +92,14 @@ fn render(chunk: &Chunk, src: &str) -> String {
 
     let mut out = String::new();
     for t in &outcome.trace {
-        writeln!(out, "{:04} {} fuel={}", t.index, t.instr, t.fuel_left).unwrap();
+        write!(out, "{:04} {} fuel={}", t.index, t.instr, t.fuel_left).unwrap();
+        if let Some(m) = t.memory {
+            write!(out, " cell={} alloc={:04}", m.cell, m.allocated_at).unwrap();
+            if let Some(f) = m.freed_at {
+                write!(out, " free={f:04}").unwrap();
+            }
+        }
+        out += "\n";
     }
     for e in &outcome.effects {
         let name = EFFECTS[usize::from(e.effect)];
@@ -105,6 +112,9 @@ fn render(chunk: &Chunk, src: &str) -> String {
         outcome.executed()
     )
     .unwrap();
+    if let Some(f) = outcome.fault {
+        writeln!(out, "fault {} at {:04} {:?}", f.kind.code(), f.at, f.kind).unwrap();
+    }
     match outcome.error {
         None => out += "ok\n",
         Some(e) => writeln!(out, "error {} at {:04} {:?}", e.kind.code(), e.at, e.kind).unwrap(),

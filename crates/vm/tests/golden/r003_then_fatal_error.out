@@ -1,0 +1,17 @@
+0000 PUSH_INT 1 fuel=9999
+0001 CALL_BUILTIN 0 (alloc) fuel=9991 cell=0 alloc=0001
+0002 STORE_LOCAL 1 fuel=9990
+0003 LOAD_LOCAL 1 fuel=9989
+0004 CALL_BUILTIN 1 (free) fuel=9985 cell=0 alloc=0001 free=0004
+0005 LOAD_LOCAL 1 fuel=9984
+0006 CALL_BUILTIN 2 (read) fuel=9982 cell=0 alloc=0001 free=0004
+0007 PUSH_INT 1 fuel=9981
+0008 SUB fuel=9980
+0009 STORE_LOCAL 2 fuel=9979
+0010 LOAD_LOCAL 0 fuel=9978
+0011 PUSH_INT 1 fuel=9977
+0012 LOAD_LOCAL 2 fuel=9976
+0013 DIV fuel=9975
+fuel_used=25 executed=14
+fault R003 at 0006 UseAfterFree(CellInfo { cell: 0, allocated_at: 1, freed_at: Some(4) })
+error R005 at 0013 DivisionByZero

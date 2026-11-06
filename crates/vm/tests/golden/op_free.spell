@@ -1,0 +1,6 @@
+spell S(t):
+    let a <- alloc(1)
+    let b <- alloc(2)
+    free(a)
+    free(b)
+end

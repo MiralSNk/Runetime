@@ -1,0 +1,13 @@
+0000 PUSH_INT 1 fuel=9999
+0001 CALL_BUILTIN 0 (alloc) fuel=9991 cell=0 alloc=0001
+0002 STORE_LOCAL 1 fuel=9990
+0003 LOAD_LOCAL 0 fuel=9989
+0004 PUSH_INT 2 fuel=9988
+0005 EMIT 0 (Flame) fuel=9972
+0006 LOAD_LOCAL 1 fuel=9971
+0007 CALL_BUILTIN 1 (free) fuel=9967 cell=0 alloc=0001 free=0007
+0008 LOAD_LOCAL 1 fuel=9966
+0009 CALL_BUILTIN 1 (free) fuel=9962 cell=0 alloc=0001 free=0007
+effect Flame at=1 power=2
+fuel_used=38 executed=10
+error R004 at 0009 DoubleFree(CellInfo { cell: 0, allocated_at: 1, freed_at: Some(7) })

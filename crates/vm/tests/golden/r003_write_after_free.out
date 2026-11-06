@@ -1,0 +1,16 @@
+0000 PUSH_INT 5 fuel=9999
+0001 CALL_BUILTIN 0 (alloc) fuel=9991 cell=0 alloc=0001
+0002 STORE_LOCAL 1 fuel=9990
+0003 LOAD_LOCAL 1 fuel=9989
+0004 CALL_BUILTIN 1 (free) fuel=9985 cell=0 alloc=0001 free=0004
+0005 LOAD_LOCAL 1 fuel=9984
+0006 PUSH_INT 100 fuel=9983
+0007 CALL_BUILTIN 3 (write) fuel=9981 cell=0 alloc=0001 free=0004
+0008 LOAD_LOCAL 0 fuel=9980
+0009 PUSH_INT 1 fuel=9979
+0010 EMIT 0 (Flame) fuel=9963
+0011 RET fuel=9962
+effect Flame at=0 power=1
+fuel_used=38 executed=12
+fault R003 at 0007 UseAfterFree(CellInfo { cell: 0, allocated_at: 1, freed_at: Some(4) })
+ok

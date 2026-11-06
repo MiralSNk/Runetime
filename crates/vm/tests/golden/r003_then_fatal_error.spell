@@ -1,0 +1,6 @@
+spell S(t):
+    let c <- alloc(1)
+    free(c)
+    let z <- read(c) - 1
+    emit Flame(at: t, power: 1 / z)
+end

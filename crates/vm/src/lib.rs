@@ -4,9 +4,6 @@
 //! Single-threaded and deterministic: the same chunk and the same [`Cast`]
 //! always produce the same [`Outcome`]. Never panics on bad bytecode or input;
 //! those end the cast with `R010`.
-//!
-//! Spell memory (`alloc`, `free`, `read`, `write`) is v0.1 step 5 and is not
-//! implemented yet.
 
 use lang::bytecode::{BUILTINS, Chunk, EFFECTS, Instr, MAX_LOCALS};
 
@@ -14,6 +11,8 @@ use lang::bytecode::{BUILTINS, Chunk, EFFECTS, Instr, MAX_LOCALS};
 pub const MAX_FRAMES: usize = 64;
 /// Most values on the operand stack.
 pub const MAX_OPERANDS: usize = 256;
+/// Most live (allocated, not yet freed) memory cells per cast.
+pub const MAX_CELLS: usize = 32;
 /// Fuel cost of each builtin, by `CALL_BUILTIN` operand.
 const BUILTIN_FUEL: [u64; BUILTINS.len()] = [8, 4, 2, 2, 2];
 
@@ -48,6 +47,8 @@ pub enum Value {
     Bool(bool),
     /// Index of an entity in the arena snapshot.
     Entity(u32),
+    /// Number of a memory cell, in `alloc` order from 0.
+    Cell(u32),
 }
 
 /// An effect produced by `EMIT`.
@@ -61,6 +62,17 @@ pub struct Effect {
     pub power: i64,
 }
 
+/// History of a memory cell, for the trace and memory errors.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub struct CellInfo {
+    /// Cell number.
+    pub cell: u32,
+    /// Index of the `alloc` instruction that created it.
+    pub allocated_at: u32,
+    /// Index of the `free` instruction that released it, if any.
+    pub freed_at: Option<u32>,
+}
+
 /// One executed instruction in the trace.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct TraceEntry {
@@ -70,6 +82,8 @@ pub struct TraceEntry {
     pub instr: Instr,
     /// Fuel left after paying for it.
     pub fuel_left: u64,
+    /// The cell touched by `alloc`, `free`, `read` or `write`.
+    pub memory: Option<CellInfo>,
 }
 
 /// Why bytecode or cast input is invalid (`R010`).
@@ -105,12 +119,21 @@ pub enum Corruption {
 /// Kind of a runtime error.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum ErrorKind {
-    /// `R001`: frame stack overflow.
+    /// `R001`: frame stack overflow. Unreachable in v0.1.
     FrameOverflow,
+    /// `R002`: a cell that does not exist. Unreachable in v0.1.
+    NoSuchCell(u32),
+    /// `R003`: `read` or `write` of a freed cell. Does not end the cast.
+    UseAfterFree(CellInfo),
+    /// `R004`: `free` of a freed cell.
+    DoubleFree(CellInfo),
     /// `R005`: division by zero.
     DivisionByZero,
     /// `R006`: integer overflow.
     IntegerOverflow,
+    /// `R007`: more than [`MAX_CELLS`] live cells (or more cells in one cast
+    /// than fit in `u32`).
+    TooManyCells,
     /// `R008`: not enough fuel for the next instruction.
     OutOfFuel,
     /// `R009`: operand stack overflow.
@@ -124,8 +147,12 @@ impl ErrorKind {
     pub fn code(&self) -> &'static str {
         match self {
             ErrorKind::FrameOverflow => "R001",
+            ErrorKind::NoSuchCell(_) => "R002",
+            ErrorKind::UseAfterFree(_) => "R003",
+            ErrorKind::DoubleFree(_) => "R004",
             ErrorKind::DivisionByZero => "R005",
             ErrorKind::IntegerOverflow => "R006",
+            ErrorKind::TooManyCells => "R007",
             ErrorKind::OutOfFuel => "R008",
             ErrorKind::OperandOverflow => "R009",
             ErrorKind::Corrupt(_) => "R010",
@@ -151,6 +178,9 @@ pub struct Outcome {
     pub trace: Vec<TraceEntry>,
     /// Fuel spent.
     pub fuel_used: u64,
+    /// The first `R003`, if any. It does not end the cast, but every effect
+    /// after it appears at the caster.
+    pub fault: Option<RuntimeError>,
     /// The error that ended the cast, if any.
     pub error: Option<RuntimeError>,
 }
@@ -187,12 +217,16 @@ pub fn run(chunk: &Chunk, cast: &Cast) -> Outcome {
         fuel: cast.fuel,
         effects: Vec::new(),
         trace: Vec::new(),
+        cells: Vec::new(),
+        live_cells: 0,
+        fault: None,
     };
     let error = m.exec().err();
     Outcome {
         effects: m.effects,
         trace: m.trace,
         fuel_used: cast.fuel - m.fuel,
+        fault: m.fault,
         error,
     }
 }
@@ -213,6 +247,17 @@ struct Machine<'a> {
     fuel: u64,
     effects: Vec<Effect>,
     trace: Vec<TraceEntry>,
+    /// Every cell of the cast, freed ones included; the index is the number.
+    cells: Vec<Cell>,
+    live_cells: usize,
+    /// The first `R003`.
+    fault: Option<RuntimeError>,
+}
+
+struct Cell {
+    value: i64,
+    allocated_at: u32,
+    freed_at: Option<u32>,
 }
 
 type Step<T> = Result<T, ErrorKind>;
@@ -253,8 +298,9 @@ impl Machine<'_> {
                 index: at,
                 instr,
                 fuel_left: self.fuel,
+                memory: None,
             });
-            match self.step(instr).map_err(fail)? {
+            match self.step(instr, at).map_err(fail)? {
                 Flow::Next => pc += 1,
                 Flow::Jump(target) => pc = target,
                 Flow::Done => return Ok(()),
@@ -331,6 +377,104 @@ impl Machine<'_> {
         }
     }
 
+    /// Pops a cell handle and records the cell in the current trace entry.
+    fn pop_cell(&mut self) -> Step<CellInfo> {
+        let Value::Cell(cell) = self.pop()? else {
+            return corrupt(Corruption::WrongType);
+        };
+        let Some(c) = usize::try_from(cell).ok().and_then(|i| self.cells.get(i)) else {
+            return Err(ErrorKind::NoSuchCell(cell));
+        };
+        let info = CellInfo {
+            cell,
+            allocated_at: c.allocated_at,
+            freed_at: c.freed_at,
+        };
+        self.note(info);
+        Ok(info)
+    }
+
+    fn note(&mut self, info: CellInfo) {
+        if let Some(entry) = self.trace.last_mut() {
+            entry.memory = Some(info);
+        }
+    }
+
+    fn cell_mut(&mut self, info: CellInfo) -> &mut Cell {
+        // pop_cell only returns cells that exist.
+        &mut self.cells[info.cell as usize]
+    }
+
+    /// Records the first `R003`; the cast goes on.
+    fn use_after_free(&mut self, info: CellInfo, at: u32) {
+        self.fault.get_or_insert(RuntimeError {
+            kind: ErrorKind::UseAfterFree(info),
+            at,
+        });
+    }
+
+    fn builtin(&mut self, id: u8, at: u32) -> Step<Flow> {
+        match BUILTINS.get(usize::from(id)).copied() {
+            Some("alloc") => {
+                let value = self.pop_int()?;
+                if self.live_cells >= MAX_CELLS {
+                    return Err(ErrorKind::TooManyCells);
+                }
+                let cell = u32::try_from(self.cells.len()).map_err(|_| ErrorKind::TooManyCells)?;
+                self.cells.push(Cell {
+                    value,
+                    allocated_at: at,
+                    freed_at: None,
+                });
+                self.live_cells += 1;
+                self.note(CellInfo {
+                    cell,
+                    allocated_at: at,
+                    freed_at: None,
+                });
+                self.push(Value::Cell(cell))
+            }
+            Some("free") => {
+                let info = self.pop_cell()?;
+                if info.freed_at.is_some() {
+                    return Err(ErrorKind::DoubleFree(info));
+                }
+                self.cell_mut(info).freed_at = Some(at);
+                self.live_cells -= 1;
+                self.note(CellInfo {
+                    freed_at: Some(at),
+                    ..info
+                });
+                Ok(Flow::Next)
+            }
+            Some("read") => {
+                let info = self.pop_cell()?;
+                if info.freed_at.is_some() {
+                    self.use_after_free(info, at);
+                }
+                let value = self.cell_mut(info).value;
+                self.push(Value::Int(value))
+            }
+            Some("write") => {
+                let value = self.pop_int()?;
+                let info = self.pop_cell()?;
+                if info.freed_at.is_some() {
+                    self.use_after_free(info, at);
+                } else {
+                    self.cell_mut(info).value = value;
+                }
+                Ok(Flow::Next)
+            }
+            Some("distance") => {
+                let b = self.pop_entity()?;
+                let a = self.pop_entity()?;
+                let d = self.distance(a, b)?;
+                self.push(Value::Int(d))
+            }
+            _ => corrupt(Corruption::UnknownBuiltin(id)),
+        }
+    }
+
     /// Pops `b`, then `a`, and pushes `f(a, b)`; `None` from `f` is `R006`.
     fn arith(&mut self, f: fn(i64, i64) -> Option<i64>) -> Step<Flow> {
         let b = self.pop_int()?;
@@ -371,7 +515,7 @@ impl Machine<'_> {
         }
     }
 
-    fn step(&mut self, instr: Instr) -> Step<Flow> {
+    fn step(&mut self, instr: Instr, at: u32) -> Step<Flow> {
         match instr {
             Instr::PushInt(n) => self.push(Value::Int(n)),
             Instr::PushBool(b @ (0 | 1)) => self.push(Value::Bool(b == 1)),
@@ -416,23 +560,20 @@ impl Machine<'_> {
                 let cond = self.pop_bool()?;
                 Ok(if cond { Flow::Next } else { Flow::Jump(t) })
             }
-            Instr::CallBuiltin(id) => match BUILTINS.get(usize::from(id)) {
-                Some(&"distance") => {
-                    let b = self.pop_entity()?;
-                    let a = self.pop_entity()?;
-                    let d = self.distance(a, b)?;
-                    self.push(Value::Int(d))
-                }
-                Some(name) => todo!("builtin `{name}`: spell memory is v0.1 step 5"),
-                None => corrupt(Corruption::UnknownBuiltin(id)),
-            },
+            Instr::CallBuiltin(id) => self.builtin(id, at),
             Instr::Emit(id) => {
                 if usize::from(id) >= EFFECTS.len() {
                     return corrupt(Corruption::UnknownEffect(id));
                 }
                 // Flame(at: Entity, power: Int) is the only effect in v0.1.
                 let power = self.pop_int()?;
-                let at = self.pop_entity()?;
+                let target = self.pop_entity()?;
+                // After an R003 every effect lands on the caster.
+                let at = if self.fault.is_some() {
+                    self.cast.caster
+                } else {
+                    target
+                };
                 self.effects.push(Effect {
                     effect: id,
                     at,
