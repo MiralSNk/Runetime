@@ -2,9 +2,11 @@
 //! live in the binary (`main.rs`).
 
 pub mod arena;
+pub mod grimoire;
+pub mod text;
 
 /// Built-in spell for scenario A of `docs/V0_1.md`: the working example from
-/// `docs/SPEC.md`. Cast with key 1 until the grimoire arrives in step 7.
+/// `docs/SPEC.md`. The grimoire starts with it.
 pub const SCENARIO_A: &str = "spell Fireball(target):
     let power <- 12
     let cell <- alloc(power)
@@ -15,7 +17,7 @@ end
 ";
 
 /// Built-in spell for scenario B of `docs/V0_1.md`: the use-after-free
-/// example from `docs/SPEC.md`. Cast with key 2.
+/// example from `docs/SPEC.md`.
 pub const SCENARIO_B: &str = "spell Fireball(target):
     let power <- 12
     let cell <- alloc(power)

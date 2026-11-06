@@ -279,6 +279,67 @@ fn cost(instr: Instr) -> Step<u64> {
     }
 }
 
+/// Fuel cost of a chunk computed without running it, by "Cost at build
+/// time" in `docs/SPEC.md`.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum Estimate {
+    /// No branches and no loops: a cast that runs to the end costs exactly
+    /// this.
+    Exact(u64),
+    /// Branches but no loops: the most expensive path.
+    AtMost(u64),
+    /// A backward jump: the cost depends on the number of iterations.
+    Loop,
+}
+
+/// Estimates the fuel cost of `chunk` without running it.
+///
+/// # Errors
+///
+/// `R010` ([`ErrorKind::Corrupt`]) for bytecode the VM would reject on the
+/// way: a jump past the end, code that runs off its end, an unknown builtin.
+/// Code from [`lang::compile`] never fails.
+///
+/// # Examples
+///
+/// ```
+/// use vm::{Estimate, estimate};
+///
+/// let cost = |src: &str| estimate(&lang::compile(src).unwrap()[0]).unwrap();
+/// // PUSH_INT, LOAD_LOCAL, PUSH_INT at 1, EMIT at 16, RET at 1.
+/// assert_eq!(cost("spell S(t):\n    emit Flame(at: t, power: 2)\nend"), Estimate::Exact(19));
+/// assert!(matches!(cost("spell S(t):\n    if true:\n        emit Flame(at: t, power: 2)\n    end\nend"), Estimate::AtMost(_)));
+/// assert_eq!(cost("spell S(t):\n    while true:\n    end\nend"), Estimate::Loop);
+/// ```
+pub fn estimate(chunk: &Chunk) -> Result<Estimate, ErrorKind> {
+    let mut branches = false;
+    // Most expensive path from each instruction to the end. Without backward
+    // jumps every successor is later, so a reverse sweep sees it first.
+    let mut best = vec![0u64; chunk.code.len()];
+    for (i, &instr) in chunk.code.iter().enumerate().rev() {
+        let at = |t: usize, c| best.get(t).copied().ok_or(ErrorKind::Corrupt(c));
+        let tail = match instr {
+            Instr::Ret | Instr::Halt => 0,
+            Instr::Jmp(t) | Instr::JmpIfFalse(t) if t as usize <= i => return Ok(Estimate::Loop),
+            Instr::Jmp(t) => at(t as usize, Corruption::BadJump(t))?,
+            Instr::JmpIfFalse(t) => {
+                branches = true;
+                at(t as usize, Corruption::BadJump(t))?.max(at(i + 1, Corruption::NoReturn)?)
+            }
+            _ => at(i + 1, Corruption::NoReturn)?,
+        };
+        best[i] = cost(instr)?.saturating_add(tail);
+    }
+    let total = *best
+        .first()
+        .ok_or(ErrorKind::Corrupt(Corruption::NoReturn))?;
+    Ok(if branches {
+        Estimate::AtMost(total)
+    } else {
+        Estimate::Exact(total)
+    })
+}
+
 impl Machine<'_> {
     fn exec(&mut self) -> Result<(), RuntimeError> {
         self.start().map_err(|kind| RuntimeError { kind, at: 0 })?;
