@@ -2,3 +2,9 @@
 name = "game"
 version.workspace = true
 edition.workspace = true
+
+[dependencies]
+lang = { path = "../lang" }
+loc = { path = "../loc" }
+macroquad = "0.4.16"
+vm = { path = "../vm" }
