@@ -1,0 +1,9 @@
+1:1 Let
+1:5 Ident("x")
+1:7 Arrow
+1:10 Number(1)
+2:1 Let
+2:5 Ident("y")
+2:7 Arrow
+2:10 Number(2)
+4:4 End

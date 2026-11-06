@@ -1,0 +1,4 @@
+# full-line comment, кириллица в комментарии допустима
+let x <- 1 # trailing comment <- == $ @
+#
+let y <- 2 # no newline at end
