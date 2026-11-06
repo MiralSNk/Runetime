@@ -1,0 +1,4 @@
+# locals: 0
+PUSH_BOOL 1
+PUSH_INT 1
+ADD

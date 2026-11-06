@@ -1,0 +1,15 @@
+0000 LOAD_LOCAL 0 fuel=9999
+0001 LOAD_LOCAL 0 fuel=9998
+0002 LOAD_LOCAL 1 fuel=9997
+0003 CALL_BUILTIN 4 (distance) fuel=9995
+0004 EMIT 0 (Flame) fuel=9979
+0005 LOAD_LOCAL 1 fuel=9978
+0006 LOAD_LOCAL 1 fuel=9977
+0007 LOAD_LOCAL 1 fuel=9976
+0008 CALL_BUILTIN 4 (distance) fuel=9974
+0009 EMIT 0 (Flame) fuel=9958
+0010 RET fuel=9957
+effect Flame at=1 power=5
+effect Flame at=2 power=0
+fuel_used=43 executed=11
+ok

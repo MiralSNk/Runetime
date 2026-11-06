@@ -1,0 +1,9 @@
+spell S(t):
+    let z <- 0
+    if false and 1 / z == 0:
+        emit Flame(at: t, power: 1)
+    end
+    if true or 1 / z == 0:
+        emit Flame(at: t, power: 2)
+    end
+end

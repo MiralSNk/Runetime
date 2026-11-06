@@ -1,0 +1,8 @@
+spell S(t):
+    if 3 > 2:
+        emit Flame(at: t, power: 1)
+    end
+    if 2 > 2:
+        emit Flame(at: t, power: 2)
+    end
+end

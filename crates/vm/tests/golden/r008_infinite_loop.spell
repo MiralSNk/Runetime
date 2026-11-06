@@ -1,0 +1,5 @@
+spell S(t):
+# fuel: 20
+    while true:
+    end
+end

@@ -1,0 +1,23 @@
+0000 LOAD_LOCAL 0 fuel=9999
+0001 PUSH_INT 7 fuel=9998
+0002 PUSH_INT 2 fuel=9997
+0003 DIV fuel=9996
+0004 EMIT 0 (Flame) fuel=9980
+0005 LOAD_LOCAL 0 fuel=9979
+0006 PUSH_INT 7 fuel=9978
+0007 NEG fuel=9977
+0008 PUSH_INT 2 fuel=9976
+0009 DIV fuel=9975
+0010 EMIT 0 (Flame) fuel=9959
+0011 LOAD_LOCAL 0 fuel=9958
+0012 PUSH_INT 7 fuel=9957
+0013 PUSH_INT 2 fuel=9956
+0014 NEG fuel=9955
+0015 DIV fuel=9954
+0016 EMIT 0 (Flame) fuel=9938
+0017 RET fuel=9937
+effect Flame at=1 power=3
+effect Flame at=1 power=-3
+effect Flame at=1 power=-3
+fuel_used=63 executed=18
+ok

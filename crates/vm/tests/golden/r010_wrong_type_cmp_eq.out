@@ -1,0 +1,5 @@
+0000 LOAD_LOCAL 0 fuel=9999
+0001 LOAD_LOCAL 0 fuel=9998
+0002 CMP_EQ fuel=9997
+fuel_used=3 executed=3
+error R010 at 0002 Corrupt(WrongType)

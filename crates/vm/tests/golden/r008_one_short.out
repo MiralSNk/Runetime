@@ -1,0 +1,6 @@
+0000 LOAD_LOCAL 0 fuel=17
+0001 PUSH_INT 1 fuel=16
+0002 EMIT 0 (Flame) fuel=0
+effect Flame at=1 power=1
+fuel_used=18 executed=3
+error R008 at 0003 OutOfFuel

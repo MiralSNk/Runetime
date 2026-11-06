@@ -1,0 +1,12 @@
+0000 PUSH_INT 0 fuel=9999
+0001 STORE_LOCAL 1 fuel=9998
+0002 LOAD_LOCAL 0 fuel=9997
+0003 PUSH_INT 5 fuel=9996
+0004 EMIT 0 (Flame) fuel=9980
+0005 LOAD_LOCAL 0 fuel=9979
+0006 PUSH_INT 1 fuel=9978
+0007 LOAD_LOCAL 1 fuel=9977
+0008 DIV fuel=9976
+effect Flame at=1 power=5
+fuel_used=24 executed=9
+error R005 at 0008 DivisionByZero

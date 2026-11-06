@@ -1,0 +1,4 @@
+spell S(a, b):
+    emit Flame(at: a, power: distance(a, b))
+    emit Flame(at: b, power: distance(b, b))
+end

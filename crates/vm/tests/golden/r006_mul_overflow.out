@@ -1,0 +1,6 @@
+0000 LOAD_LOCAL 0 fuel=9999
+0001 PUSH_INT 4611686018427387904 fuel=9998
+0002 PUSH_INT 2 fuel=9997
+0003 MUL fuel=9996
+fuel_used=4 executed=4
+error R006 at 0003 IntegerOverflow

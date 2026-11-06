@@ -91,6 +91,8 @@ pub enum DiagnosticKind {
     OpaqueArithmetic(Ty),
     /// `C008`: more than [`crate::bytecode::MAX_LOCALS`] local variables in a spell.
     TooManyLocals,
+    /// `C009`: nesting deeper than [`crate::parser::MAX_NESTING`] levels.
+    TooDeep,
 }
 
 impl Diagnostic {
@@ -115,6 +117,7 @@ impl Diagnostic {
             Redeclared(_) => "C006",
             OpaqueArithmetic(_) => "C007",
             TooManyLocals => "C008",
+            TooDeep => "C009",
         }
     }
 }

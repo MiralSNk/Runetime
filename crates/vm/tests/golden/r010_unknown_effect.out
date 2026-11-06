@@ -1,0 +1,3 @@
+0000 EMIT 1 (?) fuel=9984
+fuel_used=16 executed=1
+error R010 at 0000 Corrupt(UnknownEffect(1))

@@ -1,0 +1,4 @@
+spell S(t):
+    let x <- 5
+    emit Flame(at: t, power: -x)
+end

@@ -1,0 +1,4 @@
+spell S(t):
+# fuel: 18
+    emit Flame(at: t, power: 1)
+end

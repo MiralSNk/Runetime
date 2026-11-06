@@ -4,13 +4,16 @@ use crate::ast::{Arg, BinaryOp, Call, Expr, ExprKind, Ident, Program, Spell, Stm
 use crate::diag::{Diagnostic, DiagnosticKind, Expected, Pos};
 use crate::lexer::{Token, TokenKind, tokenize};
 
+/// Deepest nesting level allowed; opening a deeper one is `C009`.
+pub const MAX_NESTING: usize = 64;
+
 /// Tokenizes and parses `src` into a [`Program`]. Does not check names or
 /// types; see [`crate::check::check`].
 ///
 /// # Errors
 ///
-/// Returns the first `C001` [`Diagnostic`]: a lexical error or a token that
-/// does not fit the grammar.
+/// Returns the first `C001` [`Diagnostic`] (a lexical error or a token that
+/// does not fit the grammar) or `C009` (nesting deeper than [`MAX_NESTING`]).
 ///
 /// # Examples
 ///
@@ -25,6 +28,7 @@ pub fn parse(src: &str) -> std::result::Result<Program, Diagnostic> {
     Parser {
         tokens: tokenize(src)?,
         i: 0,
+        depth: 0,
     }
     .program()
 }
@@ -35,6 +39,8 @@ struct Parser {
     /// Always ends with [`TokenKind::Eof`].
     tokens: Vec<Token>,
     i: usize,
+    /// Current nesting level; the spell body is level 0.
+    depth: usize,
 }
 
 impl Parser {
@@ -80,6 +86,20 @@ impl Parser {
         } else {
             Err(self.error(Expected::Token(kind)))
         }
+    }
+
+    /// Runs `f` one nesting level deeper; `pos` is the token opening the level.
+    fn nested<T>(&mut self, pos: Pos, f: impl FnOnce(&mut Self) -> Result<T>) -> Result<T> {
+        self.depth += 1;
+        if self.depth > MAX_NESTING {
+            return Err(Diagnostic {
+                kind: DiagnosticKind::TooDeep,
+                pos,
+            });
+        }
+        let result = f(self);
+        self.depth -= 1;
+        result
     }
 
     fn ident(&mut self) -> Result<Ident> {
@@ -137,13 +157,15 @@ impl Parser {
                 Ok(Stmt::Let { name, value })
             }
             TokenKind::If => {
+                let pos = self.pos();
                 self.advance();
                 let cond = self.expr()?;
                 self.expect(TokenKind::Colon)?;
-                let then = self.block(&[TokenKind::Else, TokenKind::End])?;
+                let then = self.nested(pos, |p| p.block(&[TokenKind::Else, TokenKind::End]))?;
+                let else_pos = self.pos();
                 let otherwise = if self.eat(&TokenKind::Else) {
                     self.expect(TokenKind::Colon)?;
-                    Some(self.block(&[TokenKind::End])?)
+                    Some(self.nested(else_pos, |p| p.block(&[TokenKind::End]))?)
                 } else {
                     None
                 };
@@ -155,10 +177,11 @@ impl Parser {
                 })
             }
             TokenKind::While => {
+                let pos = self.pos();
                 self.advance();
                 let cond = self.expr()?;
                 self.expect(TokenKind::Colon)?;
-                let body = self.block(&[TokenKind::End])?;
+                let body = self.nested(pos, |p| p.block(&[TokenKind::End]))?;
                 self.expect(TokenKind::End)?;
                 Ok(Stmt::While { cond, body })
             }
@@ -189,16 +212,19 @@ impl Parser {
 
     /// `"(" [ arg { "," arg } ] ")"`
     fn args(&mut self) -> Result<Vec<Arg>> {
+        let pos = self.pos();
         self.expect(TokenKind::LParen)?;
-        let mut args = Vec::new();
-        if *self.peek() != TokenKind::RParen {
-            args.push(self.arg()?);
-            while self.eat(&TokenKind::Comma) {
-                args.push(self.arg()?);
+        self.nested(pos, |p| {
+            let mut args = Vec::new();
+            if *p.peek() != TokenKind::RParen {
+                args.push(p.arg()?);
+                while p.eat(&TokenKind::Comma) {
+                    args.push(p.arg()?);
+                }
             }
-        }
-        self.expect(TokenKind::RParen)?;
-        Ok(args)
+            p.expect(TokenKind::RParen)?;
+            Ok(args)
+        })
     }
 
     fn arg(&mut self) -> Result<Arg> {
@@ -302,7 +328,7 @@ impl Parser {
             TokenKind::Ident(name) => ExprKind::Var(name.clone()),
             TokenKind::LParen => {
                 self.advance();
-                let inner = self.expr()?;
+                let inner = self.nested(pos, Self::expr)?;
                 self.expect(TokenKind::RParen)?;
                 return Ok(inner);
             }

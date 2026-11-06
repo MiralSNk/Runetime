@@ -1,0 +1,4 @@
+spell S(t):
+    let m <- -9223372036854775807 - 1
+    emit Flame(at: t, power: -m)
+end

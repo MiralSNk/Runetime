@@ -1,0 +1,17 @@
+0000 PUSH_INT 5 fuel=9999
+0001 STORE_LOCAL 1 fuel=9998
+0002 LOAD_LOCAL 1 fuel=9997
+0003 STORE_LOCAL 2 fuel=9996
+0004 PUSH_INT 7 fuel=9995
+0005 STORE_LOCAL 1 fuel=9994
+0006 LOAD_LOCAL 0 fuel=9993
+0007 LOAD_LOCAL 1 fuel=9992
+0008 EMIT 0 (Flame) fuel=9976
+0009 LOAD_LOCAL 0 fuel=9975
+0010 LOAD_LOCAL 2 fuel=9974
+0011 EMIT 0 (Flame) fuel=9958
+0012 RET fuel=9957
+effect Flame at=1 power=7
+effect Flame at=1 power=5
+fuel_used=43 executed=13
+ok

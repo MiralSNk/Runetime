@@ -1,0 +1,7 @@
+spell S(t):
+    let n <- 3
+    while n > 0:
+        emit Flame(at: t, power: n)
+        n <- n - 1
+    end
+end

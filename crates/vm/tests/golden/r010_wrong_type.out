@@ -1,0 +1,5 @@
+0000 PUSH_BOOL 1 fuel=9999
+0001 PUSH_INT 1 fuel=9998
+0002 ADD fuel=9997
+fuel_used=3 executed=3
+error R010 at 0002 Corrupt(WrongType)

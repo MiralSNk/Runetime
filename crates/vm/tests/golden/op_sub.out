@@ -1,0 +1,9 @@
+0000 LOAD_LOCAL 0 fuel=9999
+0001 PUSH_INT 2 fuel=9998
+0002 PUSH_INT 44 fuel=9997
+0003 SUB fuel=9996
+0004 EMIT 0 (Flame) fuel=9980
+0005 RET fuel=9979
+effect Flame at=1 power=-42
+fuel_used=21 executed=6
+ok

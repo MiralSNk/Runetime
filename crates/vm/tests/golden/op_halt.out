@@ -1,0 +1,4 @@
+0000 PUSH_INT 1 fuel=9999
+0001 HALT fuel=9999
+fuel_used=1 executed=2
+ok

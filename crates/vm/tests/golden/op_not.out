@@ -1,0 +1,10 @@
+0000 PUSH_BOOL 0 fuel=9999
+0001 NOT fuel=9998
+0002 JMP_IF_FALSE 6 fuel=9997
+0003 LOAD_LOCAL 0 fuel=9996
+0004 PUSH_INT 1 fuel=9995
+0005 EMIT 0 (Flame) fuel=9979
+0006 RET fuel=9978
+effect Flame at=1 power=1
+fuel_used=22 executed=7
+ok

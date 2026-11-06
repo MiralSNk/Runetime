@@ -1,0 +1,3 @@
+0000 PUSH_BOOL 2 fuel=9999
+fuel_used=1 executed=1
+error R010 at 0000 Corrupt(BadBool(2))

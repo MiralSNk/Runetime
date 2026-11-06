@@ -1,0 +1,5 @@
+spell S(t):
+    let z <- 0
+    emit Flame(at: t, power: 5)
+    emit Flame(at: t, power: 1 / z)
+end

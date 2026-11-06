@@ -2,3 +2,6 @@
 name = "vm"
 version.workspace = true
 edition.workspace = true
+
+[dependencies]
+lang = { path = "../lang" }

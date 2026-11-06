@@ -1,0 +1,7 @@
+spell S(t):
+    let x <- 5
+    let y <- x
+    x <- 7
+    emit Flame(at: t, power: x)
+    emit Flame(at: t, power: y)
+end

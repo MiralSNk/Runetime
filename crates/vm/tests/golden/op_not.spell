@@ -1,0 +1,5 @@
+spell S(t):
+    if not false:
+        emit Flame(at: t, power: 1)
+    end
+end

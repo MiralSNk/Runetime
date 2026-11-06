@@ -1,0 +1,5 @@
+spell S(t):
+    emit Flame(at: t, power: 7 / 2)
+    emit Flame(at: t, power: -7 / 2)
+    emit Flame(at: t, power: 7 / -2)
+end

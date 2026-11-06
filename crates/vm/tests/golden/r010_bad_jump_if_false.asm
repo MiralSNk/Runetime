@@ -1,0 +1,3 @@
+# locals: 0
+PUSH_BOOL 1
+JMP_IF_FALSE 9

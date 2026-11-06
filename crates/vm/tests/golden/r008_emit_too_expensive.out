@@ -1,0 +1,4 @@
+0000 LOAD_LOCAL 0 fuel=14
+0001 PUSH_INT 1 fuel=13
+fuel_used=2 executed=2
+error R008 at 0002 OutOfFuel

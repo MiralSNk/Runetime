@@ -1,0 +1,4 @@
+0000 PUSH_BOOL 1 fuel=9999
+0001 JMP_IF_FALSE 9 fuel=9998
+fuel_used=2 executed=2
+error R010 at 0001 Corrupt(BadJump(9))

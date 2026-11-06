@@ -1,0 +1,3 @@
+spell S(t):
+    emit Flame(at: t, power: 42)
+end
