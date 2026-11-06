@@ -1,0 +1,3 @@
+spell S(t, u):
+    Flame(at: t, power: 1)
+end

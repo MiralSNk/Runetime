@@ -1,0 +1,1 @@
+5:1 error C001 UnexpectedToken { expected: Statement, found: Eof }

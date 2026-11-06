@@ -1,0 +1,6 @@
+spell S(t, u):
+    if true:
+        let x <- 1
+    end
+    let y <- x
+end

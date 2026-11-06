@@ -1,0 +1,1 @@
+1:8 error C001 UnexpectedToken { expected: Token(LParen), found: Colon }

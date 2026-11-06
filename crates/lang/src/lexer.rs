@@ -4,14 +4,7 @@
 use std::iter::Peekable;
 use std::str::Chars;
 
-/// A position in the source: 1-based line and column (in `char`s).
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub struct Pos {
-    /// Line number, starting at 1.
-    pub line: u32,
-    /// Column number in `char`s, starting at 1.
-    pub col: u32,
-}
+use crate::diag::{Diagnostic, DiagnosticKind, Pos};
 
 /// Kind of a lexical token.
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -70,6 +63,8 @@ pub enum TokenKind {
     Star,
     /// `/`
     Slash,
+    /// End of the source.
+    Eof,
 }
 
 /// A token with the position of its first character.
@@ -81,39 +76,12 @@ pub struct Token {
     pub pos: Pos,
 }
 
-/// Why the source could not be tokenized. All kinds map to `C001`.
-#[derive(Debug, Clone, PartialEq, Eq)]
-pub enum LexErrorKind {
-    /// A character that cannot start any token (including a lone `=` or `!`).
-    UnexpectedChar(char),
-    /// A number literal that does not fit in `i64`.
-    NumberOverflow,
-    /// A number literal directly followed by a letter or `_`.
-    InvalidNumber,
-}
-
-/// A lexical error. Carries a code and a position; the player-facing text
-/// is looked up by `loc`.
-#[derive(Debug, Clone, PartialEq, Eq)]
-pub struct LexError {
-    /// What went wrong.
-    pub kind: LexErrorKind,
-    /// Where the offending token starts.
-    pub pos: Pos,
-}
-
-impl LexError {
-    /// Diagnostic code from `docs/SPEC.md`. Always `"C001"`.
-    pub fn code(&self) -> &'static str {
-        "C001"
-    }
-}
-
-/// Splits `src` into tokens, stopping at the first error.
+/// Splits `src` into tokens, stopping at the first error. The last token is
+/// always [`TokenKind::Eof`], placed right after the end of the source.
 ///
 /// # Errors
 ///
-/// Returns [`LexError`] (code `C001`) on an unexpected character, a number
+/// Returns a `C001` [`Diagnostic`] on an unexpected character, a number
 /// literal that overflows `i64`, or a number directly followed by a letter
 /// or `_`.
 ///
@@ -125,13 +93,19 @@ impl LexError {
 /// let kinds: Vec<_> = tokenize("let x <- 12").unwrap().into_iter().map(|t| t.kind).collect();
 /// assert_eq!(
 ///     kinds,
-///     [TokenKind::Let, TokenKind::Ident("x".into()), TokenKind::Arrow, TokenKind::Number(12)]
+///     [
+///         TokenKind::Let,
+///         TokenKind::Ident("x".into()),
+///         TokenKind::Arrow,
+///         TokenKind::Number(12),
+///         TokenKind::Eof,
+///     ]
 /// );
 ///
 /// let err = tokenize("let x = 1").unwrap_err();
 /// assert_eq!((err.code(), err.pos.line, err.pos.col), ("C001", 1, 7));
 /// ```
-pub fn tokenize(src: &str) -> Result<Vec<Token>, LexError> {
+pub fn tokenize(src: &str) -> Result<Vec<Token>, Diagnostic> {
     let mut lx = Lexer {
         chars: src.chars().peekable(),
         pos: Pos { line: 1, col: 1 },
@@ -169,8 +143,8 @@ pub fn tokenize(src: &str) -> Result<Vec<Token>, LexError> {
                     ('*', _) => TokenKind::Star,
                     ('/', _) => TokenKind::Slash,
                     _ => {
-                        return Err(LexError {
-                            kind: LexErrorKind::UnexpectedChar(c),
+                        return Err(Diagnostic {
+                            kind: DiagnosticKind::UnexpectedChar(c),
                             pos,
                         });
                     }
@@ -179,6 +153,10 @@ pub fn tokenize(src: &str) -> Result<Vec<Token>, LexError> {
         };
         tokens.push(Token { kind, pos });
     }
+    tokens.push(Token {
+        kind: TokenKind::Eof,
+        pos: lx.pos,
+    });
     Ok(tokens)
 }
 
@@ -233,19 +211,19 @@ impl Lexer<'_> {
         }
     }
 
-    fn number(&mut self, pos: Pos) -> Result<TokenKind, LexError> {
+    fn number(&mut self, pos: Pos) -> Result<TokenKind, Diagnostic> {
         let digits = self.take_while(|c| c.is_ascii_digit());
-        let err = |kind| Err(LexError { kind, pos });
+        let err = |kind| Err(Diagnostic { kind, pos });
         if self
             .chars
             .peek()
             .is_some_and(|&c| c.is_ascii_alphabetic() || c == '_')
         {
-            return err(LexErrorKind::InvalidNumber);
+            return err(DiagnosticKind::InvalidNumber);
         }
         match digits.parse() {
             Ok(n) => Ok(TokenKind::Number(n)),
-            Err(_) => err(LexErrorKind::NumberOverflow),
+            Err(_) => err(DiagnosticKind::NumberOverflow),
         }
     }
 }

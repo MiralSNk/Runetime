@@ -1,0 +1,3 @@
+spell S(t, u):
+    emit Frost(at: t, power: 1)
+end

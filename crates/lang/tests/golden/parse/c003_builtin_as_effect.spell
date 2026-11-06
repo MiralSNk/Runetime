@@ -1,0 +1,3 @@
+spell S(t, u):
+    emit alloc(value: 1)
+end

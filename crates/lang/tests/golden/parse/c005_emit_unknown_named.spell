@@ -1,0 +1,3 @@
+spell S(t, u):
+    emit Flame(at: t, heat: 1)
+end

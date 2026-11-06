@@ -1,0 +1,1 @@
+3:7 error C001 UnexpectedToken { expected: Token(Arrow), found: EqEq }

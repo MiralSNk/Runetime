@@ -1,0 +1,6 @@
+spell Fireball(target):
+    let power <- 12
+    let cell <- alloc(power)
+    free(cell)
+    emit Flame(at: target, power: read(cell))
+end

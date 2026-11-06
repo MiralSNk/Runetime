@@ -1,0 +1,5 @@
+spell S(t, u):
+    if true:
+    else
+    end
+end

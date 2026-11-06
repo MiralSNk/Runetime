@@ -1,0 +1,3 @@
+spell A()
+spell B(x)
+  emit (Flame at:x power:1)

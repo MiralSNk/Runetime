@@ -1,0 +1,1 @@
+2:20 error C001 UnexpectedToken { expected: Statement, found: Lt }

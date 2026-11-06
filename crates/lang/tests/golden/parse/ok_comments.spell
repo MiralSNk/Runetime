@@ -1,0 +1,5 @@
+# header
+spell S(t): # trailing
+    # inside
+    emit Flame(at: t, power: 1) # after
+end

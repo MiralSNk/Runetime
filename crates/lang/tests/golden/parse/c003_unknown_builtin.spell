@@ -1,0 +1,3 @@
+spell S(t, u):
+    let x <- fireball(1)
+end

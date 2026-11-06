@@ -1,0 +1,8 @@
+spell S(t, u)
+  let c (alloc value:7)
+  call (write value:2 cell:c)
+  call (write c (+ (read c) 1))
+  let d (distance t u)
+  let e (distance b:u a:t)
+  emit (Flame power:d at:t)
+  call (free cell:c)

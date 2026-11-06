@@ -1,0 +1,1 @@
+2:19 error C004 TypeMismatch { expected: Cell, found: Int }

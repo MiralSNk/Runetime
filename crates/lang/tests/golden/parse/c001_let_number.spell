@@ -1,0 +1,3 @@
+spell S(t, u):
+    let 1 <- 2
+end

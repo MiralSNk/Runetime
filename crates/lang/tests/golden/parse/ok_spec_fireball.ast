@@ -1,0 +1,6 @@
+spell Fireball(target)
+  let power 12
+  let cell (alloc power)
+  let dmg (read cell)
+  emit (Flame at:target power:dmg)
+  call (free cell)

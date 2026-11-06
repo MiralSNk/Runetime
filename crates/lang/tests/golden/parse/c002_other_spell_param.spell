@@ -1,0 +1,5 @@
+spell S(t, u):
+end
+spell B(x):
+    let y <- t
+end

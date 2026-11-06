@@ -1,0 +1,1 @@
+2:26 error C004 TypeMismatch { expected: Entity, found: Int }

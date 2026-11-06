@@ -1,0 +1,10 @@
+spell S(t, u):
+    let a <- 1 + 2 * 3 - 4 / 2
+    let b <- -1 * 2
+    let c <- not true or false and true
+    let d <- (1 + 2) * 3
+    let e <- (1 < 2) == true
+    let f <- a > b or c != false
+    let g <- 10 - 3 - 2
+    let h <- -(a + b)
+end

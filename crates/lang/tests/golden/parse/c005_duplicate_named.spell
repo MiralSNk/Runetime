@@ -1,0 +1,4 @@
+spell S(t, u):
+    let c <- alloc(1)
+    write(cell: c, cell: c)
+end

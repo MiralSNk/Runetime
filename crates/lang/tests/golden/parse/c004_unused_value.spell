@@ -1,0 +1,4 @@
+spell S(t, u):
+    let c <- alloc(1)
+    read(c)
+end

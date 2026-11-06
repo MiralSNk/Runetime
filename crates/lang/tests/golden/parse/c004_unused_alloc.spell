@@ -1,0 +1,3 @@
+spell S(t, u):
+    alloc(1)
+end

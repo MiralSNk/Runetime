@@ -1,0 +1,13 @@
+spell S(t, u):
+    let n <- 3
+    while n > 0:
+        n <- n - 1
+        if n == 1:
+            emit Flame(at: t, power: n)
+        else:
+            if not (n == 2):
+                emit Flame(at: u, power: 0)
+            end
+        end
+    end
+end
