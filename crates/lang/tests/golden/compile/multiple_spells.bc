@@ -1,0 +1,8 @@
+spell A params=1 locals=2
+0000 PUSH_INT 1
+0001 STORE_LOCAL 1
+0002 RET
+spell B params=2 locals=3
+0000 PUSH_INT 2
+0001 STORE_LOCAL 2
+0002 RET

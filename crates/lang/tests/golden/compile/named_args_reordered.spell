@@ -1,0 +1,6 @@
+spell S(t, u):
+    let c <- alloc(value: 1)
+    write(value: 2, cell: c)
+    let d <- distance(b: u, a: t)
+    emit Flame(power: d, at: t)
+end

@@ -7,8 +7,9 @@ use std::fs;
 use std::path::Path;
 
 use lang::ast::{Arg, BinaryOp, Expr, ExprKind, Stmt, UnaryOp};
+use lang::bytecode::disassemble;
 use lang::diag::Diagnostic;
-use lang::{check::check, lexer::tokenize, parser::parse};
+use lang::{check::check, compile, lexer::tokenize, parser::parse};
 
 fn run(dir: &str, ext: &str, render: fn(&str) -> String) {
     let dir = Path::new(env!("CARGO_MANIFEST_DIR"))
@@ -58,6 +59,15 @@ fn lex() {
             writeln!(out, "{}:{} {:?}", t.pos.line, t.pos.col, t.kind).unwrap();
             out
         }),
+        Err(e) => error(&e),
+    });
+}
+
+/// Compiles; prints the disassembly of every spell on success.
+#[test]
+fn compile_to_bytecode() {
+    run("compile", "bc", |src| match compile(src) {
+        Ok(chunks) => chunks.iter().map(disassemble).collect(),
         Err(e) => error(&e),
     });
 }

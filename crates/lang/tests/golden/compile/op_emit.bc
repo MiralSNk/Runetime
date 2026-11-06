@@ -1,0 +1,5 @@
+spell S params=2 locals=2
+0000 LOAD_LOCAL 0
+0001 PUSH_INT 16
+0002 EMIT 0 (Flame)
+0003 RET

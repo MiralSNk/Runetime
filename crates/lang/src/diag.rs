@@ -89,6 +89,8 @@ pub enum DiagnosticKind {
     Redeclared(String),
     /// `C007`: arithmetic over a `Cell` or an `Entity`.
     OpaqueArithmetic(Ty),
+    /// `C008`: more than [`crate::bytecode::MAX_LOCALS`] local variables in a spell.
+    TooManyLocals,
 }
 
 impl Diagnostic {
@@ -112,6 +114,7 @@ impl Diagnostic {
             }
             Redeclared(_) => "C006",
             OpaqueArithmetic(_) => "C007",
+            TooManyLocals => "C008",
         }
     }
 }

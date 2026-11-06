@@ -1,0 +1,7 @@
+spell S(t, u):
+    if false:
+        emit Flame(at: t, power: 1)
+    else:
+        emit Flame(at: u, power: 2)
+    end
+end

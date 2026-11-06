@@ -1,0 +1,11 @@
+spell S(t, u):
+    let x <- 1
+    if true:
+        let x <- 2
+        x <- 3
+    end
+    while false:
+        let y <- x
+    end
+    x <- 4
+end

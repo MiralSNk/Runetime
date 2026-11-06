@@ -1,0 +1,4 @@
+spell S(t, u):
+    let a <- true
+    let b <- false
+end

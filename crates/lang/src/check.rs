@@ -1,9 +1,10 @@
-//! Name and type checking (`C002`–`C007`) by the static rules in
+//! Name and type checking (`C002`–`C008`) by the static rules in
 //! `docs/SPEC.md`.
 
 use std::collections::HashMap;
 
 use crate::ast::{Arg, BinaryOp, Call, Expr, ExprKind, Ident, Program, Stmt, UnaryOp};
+use crate::bytecode::MAX_LOCALS;
 use crate::diag::{Diagnostic, DiagnosticKind, Pos};
 
 /// A value type of the spell language.
@@ -20,13 +21,14 @@ pub enum Ty {
 }
 
 /// Signature of a builtin function or an effect.
-struct Signature {
-    name: &'static str,
-    params: &'static [(&'static str, Ty)],
-    ret: Option<Ty>,
+pub(crate) struct Signature {
+    pub(crate) name: &'static str,
+    pub(crate) params: &'static [(&'static str, Ty)],
+    pub(crate) ret: Option<Ty>,
 }
 
-const BUILTINS: &[Signature] = &[
+/// Builtin functions; the index is the `CALL_BUILTIN` operand.
+pub(crate) const BUILTINS: &[Signature] = &[
     Signature {
         name: "alloc",
         params: &[("value", Ty::Int)],
@@ -54,7 +56,8 @@ const BUILTINS: &[Signature] = &[
     },
 ];
 
-const EFFECTS: &[Signature] = &[Signature {
+/// Effects; the index is the `EMIT` operand.
+pub(crate) const EFFECTS: &[Signature] = &[Signature {
     name: "Flame",
     params: &[("at", Ty::Entity), ("power", Ty::Int)],
     ret: None,
@@ -64,7 +67,7 @@ const EFFECTS: &[Signature] = &[Signature {
 ///
 /// # Errors
 ///
-/// Returns the first `C002`–`C007` [`Diagnostic`] in source order.
+/// Returns the first `C002`–`C008` [`Diagnostic`] in source order.
 ///
 /// # Examples
 ///
@@ -105,12 +108,15 @@ fn fail<T>(kind: DiagnosticKind, pos: Pos) -> Result<T> {
 struct Checker<'a> {
     /// Innermost scope last.
     scopes: Vec<HashMap<&'a str, Ty>>,
+    /// Local slots taken so far: parameters plus every `let`.
+    slots: usize,
 }
 
 impl Default for Checker<'_> {
     fn default() -> Self {
         Checker {
             scopes: vec![HashMap::new()],
+            slots: 0,
         }
     }
 }
@@ -120,6 +126,10 @@ impl<'a> Checker<'a> {
         let scope = self.scopes.last_mut().expect("at least one scope");
         if scope.insert(&name.name, ty).is_some() {
             return fail(DiagnosticKind::Redeclared(name.name.clone()), name.pos);
+        }
+        self.slots += 1;
+        if self.slots > MAX_LOCALS {
+            return fail(DiagnosticKind::TooManyLocals, name.pos);
         }
         Ok(())
     }

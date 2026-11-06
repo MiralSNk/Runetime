@@ -1,0 +1,3 @@
+spell S(t, u):
+    let x <- 1 < 2 and not false or 3 == 4
+end

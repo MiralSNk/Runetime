@@ -1,0 +1,7 @@
+spell S(t, u):
+    let c <- alloc(5)
+    write(c, 6)
+    let v <- read(c)
+    let d <- distance(t, u)
+    free(c)
+end
